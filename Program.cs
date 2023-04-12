@@ -7,28 +7,28 @@ namespace JurassicPark
 
     class Dinosaur
     {
+        // finding name that does not exist says it exists
+        // allows to add to full enclosure
+
         public string Name { get; set; }
         public string DietType { get; set; }
         public DateTime WhenAcquired { get; set; }
         public int Weight { get; set; }
         public int EnclosureNumber { get; set; }
 
-        //Methods
+        // METHODS
         public string Description()
         {
-            return $"The dinosaur in enclosure {EnclosureNumber} is known as a {Name}. \nIt is a {DietType} and weighs in at a whopping {Weight} pounds! \nThe dinosaur was acquired by the park on {WhenAcquired}";
+            return $"The dinosaur in enclosure {EnclosureNumber} is known as a {Name}. \nIt is a {DietType} and weighs in at a whopping {Weight.ToString("N0")} pounds! \nThe dinosaur was acquired by the park on {WhenAcquired}";
         }
     }
 
-
     class Program
     {
-        //QUESTION
-        // Should/Could ANY of these methods be in Dinosaur class?
-        // cannot use prop w tab (automatically goes to second word), needs to be fixed.
 
         static void WelcomeToJurassicPark()
         {
+            Console.Clear();
             Console.WriteLine("--------------------------");
             Console.WriteLine("Welcome...to Jurassic Park");
             Console.WriteLine("--------------------------");
@@ -64,28 +64,146 @@ namespace JurassicPark
 
         static void ViewDinosaurs(List<Dinosaur> tempList)
         {
-            var menuInput = PromptForChar("Would you like to view dinosaurs in order by (N)ame or (E)nclosure Number?");
             if (tempList.Count == 0)
             {
                 Console.WriteLine("There are currently no dinosaurs at the park.");
                 DialogueRefresher();
             }
-            else if (menuInput == "N") { SortDinosaurs(tempList, "N"); }
-            else if (menuInput == "E") { SortDinosaurs(tempList, "E"); }
             else
             {
-                Console.WriteLine("Please enter a valid selection.");
+                var menuInput = PromptForChar("Would you like to view dinosaurs in order by (N)ame or (E)nclosure Number?");
+                if (menuInput == "N") { SortDinosaurs(tempList, "N"); }
+                else if (menuInput == "E") { SortDinosaurs(tempList, "E"); }
+                else
+                {
+                    Console.WriteLine("Please enter a valid selection.");
+                    DialogueRefresher();
+                }
+            }
+        }
+
+        // QUESTION
+        static Dinosaur FindDinosaur(List<Dinosaur> tempList, string dinosaur = null)
+        {
+            // DEFAULT IS NULL AS TRANSFER FN CALLS USING A DINOSAUR ALREADY SELECTED, MENU SELECTION PROMPTS HERE
+
+            var foundDinosaur = new Dinosaur();
+
+            // IF FIND OPTION WAS PICKED AT MENU
+            if (dinosaur == null)
+            {
+
+                var menuInput = PromptForChar("Would you like find the dinosaur by (N)ame or (E)nclosure Number?");
+
+                // CHECK TO SEE IF THE PARK IS EMPTY
+                if (tempList.Count == 0)
+                {
+                    Console.WriteLine("There are currently no dinosaurs at the park.");
+                    DialogueRefresher();
+                }
+                else if (menuInput == "N")
+                {
+                    var name = PromptForString("What is the name of the dinosaur you are looking for?");
+                    foreach (var dino in tempList)
+                    {
+                        if (name.ToLower() == dino.Name.ToLower())
+                        {
+                            Console.WriteLine($"{dino.Description()}");
+                            DialogueRefresher();
+                            // Q2
+                            return dino;
+                        }
+                    }
+                    Console.WriteLine($"There does not appear to be a {name} at Jurassic Park.");
+                    DialogueRefresher();
+                }
+                else if (menuInput == "E")
+                {
+                    var enclosureNumber = PromptForInt("What is the enclosure number of the dinosaur you are looking for?");
+                    foreach (var dino in tempList)
+                    {
+                        if (enclosureNumber == dino.EnclosureNumber)
+                        {
+                            Console.WriteLine($"{dino.Description()}");
+                            DialogueRefresher();
+                            // Q3
+                            return dino;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Please enter a valid selection.");
+                    DialogueRefresher();
+                }
+            }
+
+            // IF FIND WAS CALLED FROM TRANSFER
+            else
+            {
+                foreach (var dino in tempList)
+                {
+                    if (dinosaur.ToLower() == dino.Name.ToLower())
+                    {
+                        Console.WriteLine($"The {dinosaur} was found!");
+                        DialogueRefresher();
+                        foundDinosaur = dino;
+                        // Q1
+                        return foundDinosaur;
+                    }
+                }
+                Console.WriteLine($"There does not appear to be a {dinosaur} at Jurassic Park.");
                 DialogueRefresher();
             }
+
+            // WHY WON'T "Q1" ~ line 148 work, BUT "Q2" ~line 112 AND "Q3" ~line 128 DO?
+            return foundDinosaur;
         }
 
         static void AddDinosaur(List<Dinosaur> tempList)
         {
             var dinosaur = new Dinosaur();
+
             dinosaur.Name = PromptForString("What is the name of the dinosaur?");
-            dinosaur.DietType = PromptForString("What is the Diet Type of the dinosaur?");
+
+            bool correctDietType = true;
+            while (correctDietType)
+            {
+                var newDietType = PromptForString($"Is {dinosaur.Name} a (h)erbivore or a (c)arnivore?").ToUpper();
+                {
+                    if (newDietType == "H" || newDietType == "C")
+                    {
+                        dinosaur.DietType = newDietType;
+                        correctDietType = false;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Please input a valid diet type");
+                        DialogueRefresher();
+                    }
+                }
+            }
             dinosaur.Weight = PromptForInt("How much does the dinosaur weigh?");
-            dinosaur.EnclosureNumber = PromptForInt("What is the enclosure number of the dinosaur?");
+
+            bool enclosureIsInUse = true;
+            var newEnclosureNumber = 0;
+            while (enclosureIsInUse)
+            {
+                // SHOW UNAVAILABLE ENCLOSURE NUMBERS
+                newEnclosureNumber = PromptForInt($"What enclosure would you like for the {dinosaur.Name}?");
+                enclosureIsInUse = false;
+                foreach (var dino in tempList)
+                {
+                    // MAKING SURE THE ENCLOSURE IS NOT ALREADY IN USE
+                    if (newEnclosureNumber == dino.EnclosureNumber)
+                    {
+                        enclosureIsInUse = true;
+                        Console.WriteLine("That enclosure is already taken.");
+                        DialogueRefresher();
+                    }
+                }
+            }
+            dinosaur.EnclosureNumber = newEnclosureNumber;
             dinosaur.WhenAcquired = DateTime.Now;
 
             tempList.Add(dinosaur);
@@ -93,52 +211,88 @@ namespace JurassicPark
             DialogueRefresher();
         }
 
-        // FINISH
         static void RemoveDinosaur(List<Dinosaur> tempList)
         {
-            var deleteDinosaur = PromptForString("What is the name of the dinosaur you would like to remove from the park?");
-            tempList.RemoveAll(x => x.Name == $"{deleteDinosaur}");
-            Console.WriteLine($"The {deleteDinosaur} was deleted from the park.");
-            DialogueRefresher();
-
-            // MAKE SURE CASE IS NOT IMPORTANT (UPPER/LOWER)
-            // ADD IF THE DINO IS NOT IN THE PARK ANYMORE!
-        }
-
-        // QUESTION
-        static void TransferDinosaur(List<Dinosaur> tempList)
-        {
-            var name = PromptForString("What is the name of the dinosaur you would like to transfer?");
-
-            if (tempList.Any(x => x.Name.Contains(name)))
+            var deleteDinosaur = PromptForString("What is the name of the dinosaur you would like to remove from the park?").ToLower();
+            bool foundDinosaur = false;
+            foreach (var dino in tempList)
             {
-                Dinosaur dinoToTransfer = FindDinosaur(tempList, name);
-                bool enclosureIsInUse = true;
-                var newEnclosureNumber = 0;
-
-                // IS THERE A SIMPLER WAY FOR THE LOOP BELOW OR FOR THIS METHOD?
-                while (enclosureIsInUse)
+                if (deleteDinosaur == dino.Name.ToLower())
                 {
-                    newEnclosureNumber = PromptForInt("What enclosure number would you like to move this dinosaur to?");
-                    enclosureIsInUse = false;
-                    foreach (var dino in tempList)
-                    {
-                        // MAKING SURE THE ENCLOSURE IS NOT ALREADY IN USE
-                        if (newEnclosureNumber == dino.EnclosureNumber)
-                        {
-                            enclosureIsInUse = true;
-                            Console.WriteLine("I am sorry, the enclosure is already taken");
-                            DialogueRefresher();
-                        }
-                    }
+                    foundDinosaur = true;
                 }
-                dinoToTransfer.EnclosureNumber = newEnclosureNumber;
+            }
+            if (foundDinosaur)
+            {
+                tempList.RemoveAll(x => x.Name.ToLower() == $"{deleteDinosaur}");
+                Console.WriteLine($"The {deleteDinosaur} was removed from the park.");
+                DialogueRefresher();
             }
             else
             {
-                Console.WriteLine($"There does not appear to be a {name} at Jurassic Park.");
+                Console.WriteLine($"We do not have a {deleteDinosaur} at Jurassic Park!");
                 DialogueRefresher();
             }
+        }
+
+        static void CheckEnclosureStatus(List<Dinosaur> tempList, Dinosaur tempDino)
+        {
+            if (tempDino.Name != null)
+            {
+                var newEnclosureNumber = PromptForInt($"What enclosure would you like to move the {tempDino.Name} to?");
+                bool foundIt = true;
+
+                //var count = 0;
+                // Checking all dinosaurs to see if they are in that enclosure
+
+                // USING BOOL WITH BREAK TO GET THROUGH LOGIC
+                // BUT COULD ALSO USE COUNT METHOD...?
+                // IF DOES NOT EXIST, COUNTS SAME AS .COUNT, IF FINDS NUMBER IT DOES NOT COUNT
+                // SO IT IS LESS THAT COUNT BY 1.
+                foreach (var dino in tempList)
+                {
+                    // Dino not in desired enclosure number
+                    if (newEnclosureNumber != dino.EnclosureNumber)
+                    {
+                        foundIt = false;
+                        // count += 1;
+                    }
+                    // Dino in that enclosure number but it is not the dino being moved
+                    else if (newEnclosureNumber == dino.EnclosureNumber && dino.Name != tempDino.Name)
+                    {
+                        Console.WriteLine($"Enclosure {newEnclosureNumber} is currently occupied by {dino.Name}");
+                        DialogueRefresher();
+                        foundIt = true;
+                        break;
+                    }
+                    // Dino in that enclosure number and it is the dino being moved
+                    else if (newEnclosureNumber == dino.EnclosureNumber && dino.Name.ToLower() == tempDino.Name.ToLower())
+                    {
+                        Console.WriteLine($"This is {dino.Name}'s current enclosure. \nYou can only transfer a dinosaur to an empty enclosure.");
+                        DialogueRefresher();
+                        foundIt = true;
+                        break;
+                    }
+                }
+
+                // if (count > tempList.Count() - 1)
+                if (!foundIt)
+                {
+                    // Enclosure not being used. Transferring now.
+                    tempDino.EnclosureNumber = newEnclosureNumber;
+                    Console.WriteLine($"Park rangers have successfully moved {tempDino.Name} to {tempDino.EnclosureNumber}");
+                    DialogueRefresher();
+                }
+            }
+
+        }
+
+        static void TransferDinosaur(List<Dinosaur> tempList)
+        {
+            var name = PromptForString("What is the name of the dinosaur you would like to transfer?").ToLower();
+            var dinoToTransfer = FindDinosaur(tempList, name);
+
+            CheckEnclosureStatus(tempList, dinoToTransfer);
         }
 
         static void SummaryDinosaur(List<Dinosaur> tempList)
@@ -160,112 +314,25 @@ namespace JurassicPark
             DialogueRefresher();
         }
 
-        // QUESTION
-        static Dinosaur FindDinosaur(List<Dinosaur> tempList, string dinosaur = null)
-        {
-            // IS THERE A SIMPLER WAY FOR FindDinosaur??
-
-            // DEFAULT IS NULL AS TRANSFER FN CALLS USING A DINOSAUR ALREADY SELECTED, MENU SELECTION PROMPTS HERE
-
-            // IF FIND OPTION WAS PICKED AT MENU
-            if (dinosaur == null)
-            {
-                var menuInput = PromptForChar("Would you like find the dinosaur by (N)ame or (E)nclosure Number?");
-
-                // CHECK TO SEE IF THE PARK IS EMPTY
-                if (tempList.Count == 0)
-                {
-                    Console.WriteLine("There are currently no dinosaurs at the park.");
-                    DialogueRefresher();
-                }
-                else if (menuInput == "N")
-                {
-                    bool found = false;
-                    while (!found)
-                    {
-                        var name = PromptForString("What is the name of the dinosaur you are looking for?");
-                        foreach (var dino in tempList)
-                        {
-                            if (name == dino.Name)
-                            {
-                                Console.WriteLine($"{dino.Description()}");
-                                DialogueRefresher();
-                                found = true;
-                                return dino;
-                            }
-                        }
-                        Console.WriteLine("Please check the spelling of the dinosaur and try again.");
-                        DialogueRefresher();
-                    }
-                }
-                else if (menuInput == "E")
-                {
-                    var enclosureNumber = PromptForInt("What is the enclosure number of the dinosaur you are looking for?");
-                    foreach (var dino in tempList)
-                    {
-                        if (enclosureNumber == dino.EnclosureNumber)
-                        {
-                            Console.WriteLine($"{dino.Description()}");
-                            DialogueRefresher();
-                            return dino;
-                        }
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Please enter a valid selection.");
-                    DialogueRefresher();
-                }
-            }
-
-            // IF FIND WAS CALLED FROM TRANSFER
-            Dinosaur foundDinosaur = null;
-            if (dinosaur == null)
-            {
-                var name = PromptForString("What is the name of the dinosaur you are looking for?");
-            }
-            else
-            {
-                foreach (var dino in tempList)
-                {
-                    if (dino.Name == dinosaur)
-                    {
-                        foundDinosaur = dino;
-                    }
-                }
-            }
-            Console.WriteLine($"The {dinosaur} was found!");
-            DialogueRefresher();
-            return foundDinosaur;
-        }
-
+        // Helper Function for ViewDinosaurs
         static void SortDinosaurs(List<Dinosaur> tempList, string selection)
         {
             if (selection == "N") { PrintDinosaur(tempList.OrderBy(x => x.Name).ToList()); }
             else if (selection == "E") { PrintDinosaur(tempList.OrderBy(x => x.EnclosureNumber).ToList()); }
         }
 
+        // Helper Function for SortDinosaurs for ViewDinosaurs
         static void PrintDinosaur(List<Dinosaur> tempList)
         {
             foreach (var dino in tempList) { Console.WriteLine($"{dino.Name} is in enclosure {dino.EnclosureNumber}."); }
             DialogueRefresher();
         }
 
-        static void DialogueRefresher()
-        {
-            Console.WriteLine();
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey(true).Key.ToString();
-            Console.Clear();
-        }
-
-        // QUESTION
         static int PromptForInt(string prompt)
         {
             var inputWasInteger = false;
             int inputAsInteger = 0;
 
-            // IS THIS REALLY BEST WAY TO DO THIS?
             while (!inputWasInteger)
             {
                 var userInput = PromptForString(prompt);
@@ -300,86 +367,107 @@ namespace JurassicPark
             return userInput;
         }
 
-        // QUESTION
-        // I WOULD LIKE TO BE ABLE TO HAVE A PopulateJurassicPark METHOD! IS THIS POSSIBLE?
-        // static List<Dinosaur> PopulateJurassicPark(List<Dinosaur> tempList)
-        // {
-        //     var listOfDinosaurs = new List<Dinosaur>()
-        //     {
-        //         new Dinosaur()
-        //         {
-        //             Name = "T-Rex",
-        //             DietType = "carnivore",
-        //             Weight = 100,
-        //             EnclosureNumber = 1,
-        //             WhenAcquired = DateTime.Now,
-
-        //         },
-        //         new Dinosaur()
-        //         {
-        //             Name = "steg",
-        //             DietType = "herbivore",
-        //             Weight = 200,
-        //             EnclosureNumber = 3,
-        //             WhenAcquired = DateTime.Now,
-
-        //         },
-        //         new Dinosaur()
-        //         {
-        //             Name = "alosaur",
-        //             DietType = "omnivore",
-        //             Weight = 150,
-        //             EnclosureNumber = 2,
-        //             WhenAcquired = DateTime.Now,
-
-        //         },
-        //     };
-        //     return listOfDinosaurs;
-        // }
-
-        static void stubToBeDeleted()
+        static void DialogueRefresher()
         {
-            // THIS WILL BE DELETED AND IS JUST HERE TO PREVENT ABOVE COMMENTED OUT FN FROM COLLAPSING MORE THAT I WANT IT TO
+            Console.WriteLine();
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey(true).Key.ToString();
+            Console.Clear();
         }
 
-        // QUESTION
-        static void Main(string[] args)
+        static List<Dinosaur> PopulateJurassicPark()
         {
-            // TRYING TO USE POPULATE HERE IN VARIOUS WAYS
-            // var keepGoing = true;
-            // var dinosaur = new Dinosaur();
-            // var listOfDinosaurs = new List<Dinosaur>();
-            // listOfDinosaurs.Add(null);
-            // PopulateJurassicPark(listOfDinosaurs);
-
-            var keepGoing = true;
-            var dinosaur = new Dinosaur();
-            var listOfDinosaurs = new List<Dinosaur>() {
+            var listOfDinosaurs = new List<Dinosaur>()
+            {
                 new Dinosaur()
                 {
-                    Name = "T-Rex",
+                    Name = "Dilophosaurus",
                     DietType = "carnivore",
-                    Weight = 100,
+                    Weight = 2000,
                     EnclosureNumber = 1,
                     WhenAcquired = DateTime.Now,
                 },
                 new Dinosaur()
                 {
-                    Name = "steg",
+                    Name = "Gallimimus",
                     DietType = "herbivore",
-                    Weight = 200,
-                    EnclosureNumber = 3,
+                    Weight = 920,
+                    EnclosureNumber = 2,
                     WhenAcquired = DateTime.Now,
                 },
                 new Dinosaur()
                 {
-                    Name = "alosaur",
-                    DietType = "omnivore",
-                    Weight = 150,
-                    EnclosureNumber = 2,
+                    Name = "Baryonyx",
+                    DietType = "carnivore",
+                    Weight = 3500,
+                    EnclosureNumber = 3,
+                    WhenAcquired = DateTime.Now,
+                },
+                    new Dinosaur()
+                {
+                    Name = "Tyrannosaurus Rex",
+                    DietType = "carnivore",
+                    Weight = 18500,
+                    EnclosureNumber = 4,
+                    WhenAcquired = DateTime.Now,
+                },
+                    new Dinosaur()
+                {
+                    Name = "Triceratops",
+                    DietType = "herbivore",
+                    Weight = 25200,
+                    EnclosureNumber = 5,
+                    WhenAcquired = DateTime.Now,
+                },
+                new Dinosaur()
+                {
+                    Name = "Brachiosaurus",
+                    DietType = "herbivore",
+                    Weight = 123700,
+                    EnclosureNumber = 6,
+                    WhenAcquired = DateTime.Now,
+                },
+                new Dinosaur()
+                {
+                    Name = "Pteranodon",
+                    DietType = "carnivore",
+                    Weight = 55,
+                    EnclosureNumber = 7,
+                    WhenAcquired = DateTime.Now,
+                },
+                new Dinosaur()
+                {
+                    Name = "Stegosaurus",
+                    DietType = "herbivore",
+                    Weight = 8000,
+                    EnclosureNumber = 8,
+                    WhenAcquired = DateTime.Now,
+                },
+                new Dinosaur()
+                {
+                    Name = "Velociraptor",
+                    DietType = "carnivore",
+                    Weight = 320,
+                    EnclosureNumber = 9,
+                    WhenAcquired = DateTime.Now,
+                },
+                new Dinosaur()
+                {
+                    Name = "V",
+                    DietType = "carnivore",
+                    Weight = 320,
+                    EnclosureNumber = 10,
                     WhenAcquired = DateTime.Now,
                 },
             };
+            return listOfDinosaurs;
+        }
+
+        static void Main(string[] args)
+        {
+            var listOfDinosaurs = PopulateJurassicPark();
+
+            var keepGoing = true;
 
             while (keepGoing)
             {
