@@ -36,6 +36,7 @@ namespace JurassicPark
             Console.WriteLine();
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(true).Key.ToString();
+            Console.Clear();
         }
 
         static void Menu(List<Dinosaur> tempList)
@@ -45,19 +46,35 @@ namespace JurassicPark
             bool usingMenu = true;
             while (usingMenu)
             {
-                var menuInput = PromptForChar("What do you want to do? (V)iew, (F)ind, (A)dd, (R)emove, (T)ransfer, (S)ummary, (Q)uit");
+                var menuInput = PromptForChar("What do you want to do?\n(V)iew all dinosaurs in the park.\n(F)ind a specific dinosaur in the park.\n(A)dd a dinosaur to the park.\n(R)emove a dinosaur from the park.\n(T)ransfer a dinosaur to a new enclosure.\n(S)ummary of dinosaurs by diet in the park.\n(Q)uit the program.");
 
-                if (menuInput == "V") { ViewDinosaurs(tempList); }
-                else if (menuInput == "A") { AddDinosaur(tempList); }
-                else if (menuInput == "F") { FindDinosaur(tempList); }
-                else if (menuInput == "R") { RemoveDinosaur(tempList); }
-                else if (menuInput == "T") { TransferDinosaur(tempList); }
-                else if (menuInput == "S") { SummaryDinosaur(tempList); }
-                else if (menuInput == "Q") { usingMenu = false; }
-                else
+                switch (menuInput)
                 {
-                    Console.WriteLine("Please pick a valid option.");
-                    DialogueRefresher();
+                    case "V":
+                        ViewDinosaurs(tempList);
+                        break;
+                    case "F":
+                        FindDinosaur(tempList);
+                        break;
+                    case "A":
+                        AddDinosaur(tempList);
+                        break;
+                    case "R":
+                        RemoveDinosaur(tempList);
+                        break;
+                    case "T":
+                        TransferDinosaur(tempList);
+                        break;
+                    case "S":
+                        SummaryDinosaur(tempList);
+                        break;
+                    case "Q":
+                        usingMenu = false;
+                        break;
+                    default:
+                        Console.WriteLine("Please pick a valid option.");
+                        DialogueRefresher();
+                        break;
                 }
             }
         }
